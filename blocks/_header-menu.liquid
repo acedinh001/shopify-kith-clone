@@ -1,4 +1,3 @@
-
 {%- doc -%}
   Renders a header menu block.
 
@@ -155,6 +154,7 @@
   .menu-list {
     --menu-horizontal-gap: var(--gap-xl);
     --menu-vertical-gap: var(--gap-xl);
+    --menu-item-gap: var(--menu-horizontal-gap);
 
     display: flex;
   }
@@ -162,6 +162,7 @@
   .menu-list__list {
     display: flex;
     justify-content: var(--grid-area-alignment);
+    column-gap: var(--menu-item-gap);
   }
 
   .menu-list__list-item {
@@ -816,6 +817,22 @@
       "id": "drawer_dividers",
       "label": "t:settings.dividers",
       "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "underline_active_link",
+      "label": "Underline active link",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "menu_item_spacing",
+      "label": "Menu item spacing",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "default": 24
     }
   ]
 }

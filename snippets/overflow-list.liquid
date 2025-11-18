@@ -5,6 +5,7 @@
   @param {number} [minimum-items] - The minimum number of items to show in the overflow list.
   @param {string} [more-attributes] - The attributes that are applied on the more button.
   @param {string} [ref] - The ref that is set on the overflow-list element.
+  @param {string} [style] - Inline styles applied to the overflow-list element.
 {%- enddoc -%}
 
 <overflow-list
@@ -13,6 +14,9 @@
   {% endif %}
   {% if class %}
     class="{{ class }}"
+  {% endif %}
+  {% if style %}
+    style="{{ style }}"
   {% endif %}
   {% if minimum-items %}
     minimum-items="{{ minimum-items }}"

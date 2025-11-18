@@ -1,3 +1,11 @@
+{% stylesheet %}
+  .menu-list__link-title {
+    letter-spacing: 0.2rem;
+    font-weight: 700;
+    text-decoration: var(--menu-active-decoration);
+  }
+{% endstylesheet %}
+
 {% liquid
   assign block_settings = block.settings
   assign menu_content_type = block_settings.menu_style | default: 'text'
@@ -23,6 +31,9 @@
   endif
 %}
 
+{% assign spacing_px = block.settings.menu_item_spacing | default: 24 %}
+{% assign spacing_rem = spacing_px | divided_by: 16.0 %}
+
 {% capture children %}
   {% for link in block_settings.menu.links %}
     <li
@@ -44,7 +55,7 @@
         {%- endif -%}
         ref="menuitem"
       >
-        <span class="menu-list__link-title">{{- link.title -}}</span>
+        <span style="padding-inline: {{ spacing_rem }}rem;"class="menu-list__link-title">{{- link.title -}}</span>
       </a>
       {%- if link.links != blank -%}
         <div class="menu-list__submenu{{ color_scheme_classes }}" ref="submenu[]">
@@ -82,10 +93,12 @@
   </li>
 {% endcapture %}
 
+{% assign menu_item_spacing = block_settings.menu_item_spacing | default: 24 %}
+
 <nav header-menu>
   <div
     class="menu-list"
-    style="{% render 'menu-font-styles', settings: block_settings %}"
+    style="{% render 'menu-font-styles', settings: block_settings %} --menu-item-gap: {{ menu_item_spacing }}px;"
   >
     {% assign class = 'overflow-menu' | append: color_scheme_classes %}
     {% render 'overflow-list', class: class, ref: 'overflowMenu', children: children, minimum-items: 2, defer: true %}
