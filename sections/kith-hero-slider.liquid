@@ -5,6 +5,7 @@
 
 <section id="KithHeroSlider" class="kith-hero">
   <div class="kith-hero__wrapper">
+    {% assign slide_index = 0 %}
     {% for block in section.blocks %}
       {% assign collection = collections[block.settings.collection] %}
       {% unless collection and collection.featured_image %}
@@ -13,10 +14,10 @@
 
       <a
         href="{{ collection.url }}"
-        class="kith-slide{% if forloop.first %} is-active{% endif %}"
+        class="kith-slide{% if slide_index == 0 %} is-active{% endif %}"
         aria-label="{{ block.settings.heading | default: collection.title | escape }}"
         style="background-image: url({{ collection.featured_image | image_url: width: 2400 }});"
-        data-index="{{ forloop.index0 }}"
+        data-index="{{ slide_index }}"
       >
         <div class="kith-slide__content">
           {% if block.settings.heading or block.settings.subheading %}
@@ -35,7 +36,7 @@
         <a
           href="{{ block.settings.cta_url }}"
           class="kith-slide__cta"
-          data-index="{{ forloop.index0 }}"
+          data-index="{{ slide_index }}"
           {% if block.settings.cta_new_tab %}
             target="_blank" rel="noopener noreferrer"
           {% endif %}
@@ -43,6 +44,8 @@
           {{- block.settings.cta_text | escape -}}
         </a>
       {% endif %}
+
+      {% assign slide_index = slide_index | plus: 1 %}
     {% endfor %}
 
     <!-- Chevron Prev/Next -->
@@ -52,16 +55,22 @@
 
   <!-- Dots -->
   <div class="kith-dots">
+    {% assign dot_index = 0 %}
     {% for block in section.blocks %}
+      {% assign collection = collections[block.settings.collection] %}
+      {% unless collection and collection.featured_image %}
+        {% continue %}
+      {% endunless %}
       <div
-        class="kith-dot{% if forloop.first %} active{% endif %}"
-        data-dot="{{ forloop.index0 }}"
-        {% if forloop.first %}
+        class="kith-dot{% if dot_index == 0 %} active{% endif %}"
+        data-dot="{{ dot_index }}"
+        {% if dot_index == 0 %}
           aria-current="true"
         {% endif %}
       >
         <span class="progress"></span>
       </div>
+      {% assign dot_index = dot_index | plus: 1 %}
     {% endfor %}
   </div>
 </section>

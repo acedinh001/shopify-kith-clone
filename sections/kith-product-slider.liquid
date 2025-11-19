@@ -1,0 +1,230 @@
+{% stylesheet %}
+  .product-slider {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 40px 0;
+  }
+
+  .product-slider__wrapper {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.5s ease;
+    /* horizontal gutter controlled by CSS variable */
+    padding: 0 var(--ps-gutter, 64px);
+  }
+
+  .product-slider__item {
+    min-width: 240px;
+    flex: 0 0 auto;
+  }
+
+  /* Make all images the same fixed height and crop via object-fit */
+  .product-slider__item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-slider__item img {
+    width: 220px;
+    height: 220px; /* consistent image height */
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+  }
+
+  .product-slider__item .image-placeholder {
+    width: 100%;
+    height: 220px;
+    background: #eee;
+    border-radius: 6px;
+  }
+
+  .product-slider__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    cursor: pointer;
+    font-size: 32px;
+    padding: 10px;
+    background: transparent;
+    border-radius: 50%;
+  }
+
+  .product-slider__nav--prev {
+    left: 10px;
+  }
+
+  .product-slider__nav--next {
+    right: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .product-slider__wrapper {
+      padding: 0 var(--ps-gutter-mobile, 16px);
+    }
+    .product-slider__nav {
+      font-size: 24px;
+      padding: 8px;
+    }
+    .product-slider__nav--prev {
+      left: 8px;
+    }
+    .product-slider__nav--next {
+      right: 8px;
+    }
+  }
+{% endstylesheet %}
+
+<div
+  class="product-slider"
+  id="slider-{{ section.id }}"
+  style="--ps-gutter: {{ settings.side_padding | default: 64 }}px; --ps-gutter-mobile: {{ settings.side_padding_mobile | default: 16 }}px;"
+>
+  <div class="product-slider__wrapper">
+    {% for product in collections[section.settings.collection].products %}
+      <div class="product-slider__item">
+        <a href="{{ product.url }}">
+          <img
+            src="{{ product.featured_image | image_url: width: 400 }}"
+            alt="{{ product.title }}"
+            width="400"
+            height="220"
+          >
+          <p>{{ product.title }}</p>
+          <strong>{{ product.price | money }}</strong>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="product-slider__nav product-slider__nav--prev">‹</div>
+  <div class="product-slider__nav product-slider__nav--next">›</div>
+</div>
+
+{% javascript %}
+  (function () {
+    // Initialize all product sliders on the page. Avoid using Liquid IDs in client JS.
+    const sliders = Array.from(document.querySelectorAll('.product-slider'));
+    if (!sliders.length) return;
+
+    sliders.forEach((slider) => {
+      const wrapper = slider.querySelector('.product-slider__wrapper');
+      const items = slider.querySelectorAll('.product-slider__item');
+      const prev = slider.querySelector('.product-slider__nav--prev');
+      const next = slider.querySelector('.product-slider__nav--next');
+
+      if (!wrapper || !items || items.length === 0) return;
+
+      // Create clones at start and end to allow seamless looping
+      const originalItems = Array.from(items);
+      const originalCount = originalItems.length;
+      if (originalCount === 0) return;
+
+      // Number of clones to prepend/append - use originalCount for simplicity
+      const cloneCount = originalCount;
+
+      // Prepend clones of the last cloneCount items
+      for (let i = cloneCount - 1; i >= 0; i--) {
+        const clone = originalItems[originalCount - 1 - i].cloneNode(true);
+        wrapper.insertBefore(clone, wrapper.firstChild);
+      }
+
+      // Append clones of the first cloneCount items
+      for (let i = 0; i < cloneCount; i++) {
+        const clone = originalItems[i].cloneNode(true);
+        wrapper.appendChild(clone);
+      }
+
+      // Rebuild items list and set starting index after the prepended clones
+      const allItems = slider.querySelectorAll('.product-slider__item');
+      let currentIndex = cloneCount; // start at the first original item
+
+      function updateSlider(animate = true) {
+        const currentItem = allItems[currentIndex];
+        if (!currentItem) return;
+        const left = currentItem.offsetLeft;
+        if (!animate) wrapper.style.transition = 'none';
+        wrapper.style.transform = `translateX(-${left}px)`;
+        if (!animate) {
+          // force reflow then restore transition
+          // eslint-disable-next-line no-unused-expressions
+          wrapper.offsetHeight;
+          wrapper.style.transition = '';
+        }
+      }
+
+      function normalizeAfterTransition() {
+        // If we've moved past the original items at either end, jump back to the equivalent original
+        const maxIndex = cloneCount + originalCount - 1;
+        if (currentIndex > maxIndex) {
+          // moved into appended clones; wrap to corresponding original
+          const offset = currentIndex - (cloneCount + originalCount);
+          currentIndex = cloneCount + (offset + 0);
+          updateSlider(false);
+        } else if (currentIndex < cloneCount) {
+          // moved into prepended clones; wrap to corresponding original
+          const offset = cloneCount - currentIndex;
+          currentIndex = cloneCount + (originalCount - (offset % originalCount));
+          if (currentIndex === cloneCount + originalCount) currentIndex = cloneCount; // edge case
+          updateSlider(false);
+        }
+      }
+
+      wrapper.addEventListener('transitionend', () => {
+        normalizeAfterTransition();
+      });
+
+      function goNext() {
+        currentIndex = currentIndex + 1;
+        updateSlider(true);
+      }
+
+      function goPrev() {
+        currentIndex = currentIndex - 1;
+        updateSlider(true);
+      }
+
+      next && next.addEventListener('click', goNext);
+      prev && prev.addEventListener('click', goPrev);
+
+      // Recompute positions after images load and on resize
+      window.addEventListener('load', () => updateSlider());
+      window.addEventListener('resize', () => updateSlider());
+
+      // Initialize
+      updateSlider();
+    });
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Product Slider",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Choose collection"
+    },
+    {
+      "type": "number",
+      "id": "side_padding",
+      "label": "Side padding (desktop)",
+      "default": 64
+    },
+    {
+      "type": "number",
+      "id": "side_padding_mobile",
+      "label": "Side padding (mobile)",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Slider"
+    }
+  ]
+}
+{% endschema %}
